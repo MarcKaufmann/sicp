@@ -1,6 +1,4 @@
 sicp
 ====
 
-Working through 'Structure and Interpretation of Computer Programs'.
-
-This repository tracks my progress on SICP.
+This is me working through 'Structure and Interpretation of Computer Programs', trying most - but not all - of the exercises. 

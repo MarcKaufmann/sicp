@@ -140,3 +140,63 @@
   (g 2))
 
 ; What is (f f)? It is (f 2), which is (2 2) which is garbage? In the repl this is also garbage.
+
+(define (average a b) (\ (+ a b) 2))
+
+(define (close-enough? a b)
+  (< (abs (- a b)) 0.001))
+
+(define (search f neg-point pos-point)
+  (let ((midpoint (average neg-point pos-point)))
+    (if (close-enough? neg-point pos-point)
+        midpoint
+        (let ((test-value (f midpoint)))
+          (cond ((positive? test-value) (search f neg-point midpoint))
+                ((negative? test-value) (search f midpoint pos-point))
+                (else midpoint))))))
+              
+;; Fixed point
+
+(define tolerance 0.00001)
+
+(define (fixed-point f first-guess counter)
+  (define (close-enough? a b)
+    (< (abs (- a b)) tolerance))
+  (let ((next (f first-guess)))
+    (display counter)
+    (newline)
+    (display first-guess)
+    (newline)
+    (if (close-enough? first-guess next)
+        first-guess
+        (fixed-point f next (inc counter)))))
+
+(define (average a b)
+  (/ (+ a b) 2))
+
+(define (fixed-point-damp f first-guess counter)
+  (define (close-enough? a b)
+    (< (abs (- a b)) tolerance))
+  (let ((next (average (f first-guess) first-guess)))
+    (display first-guess)
+    (newline)
+    (if (close-enough? first-guess next)
+        first-guess
+        (fixed-point f next (inc counter)))))
+
+;; Exercise 1.35
+;; Let g be the golden ratio. The geometric definition of g is that if we have a rectangle
+;; of sides g and 1, if we take out a square of side 1, the rectangle that remains has also
+;; sides with ratio g. Thus g is given by 
+;; 1/(g - 1) = g/1 <=> 1 = g^2 - g <=> 1/g = g - 1 <=> 1/g + 1 = g
+;; Just run (fixed-point (lambda (x) (+ 1 (/ 1.0 x))) 1.0) to get the value.
+
+;; Exercise 1.36.
+;; The non-damped version takes 34 steps, the other 32. It's only in the beginning that it seems to matter,
+;; when there are large swings.
+
+(define (ex-1-36)
+  (fixed-point (lambda (x) (/ (log 1000.0) (log x))) 2.0 1))
+
+(define (ex-1-36-damp)
+  (fixed-point-damp (lambda (x) (/ (log 1000.0) (log x))) 2.0 1))

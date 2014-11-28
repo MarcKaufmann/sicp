@@ -159,7 +159,23 @@
 
 (define tolerance 0.00001)
 
-(define (fixed-point f first-guess counter)
+(define (fixed-point f first-guess)
+  (define (close-enough? a b)
+    (< (abs (- a b)) tolerance))
+  (let ((next (f first-guess)))
+    (if (close-enough? first-guess next)
+        first-guess
+        (fixed-point f next))))
+
+(define (fixed-point-damp- f first-guess )
+  (define (close-enough? a b)
+    (< (abs (- a b)) tolerance))
+  (let ((next (average (f first-guess) first-guess)))
+    (if (close-enough? first-guess next)
+        first-guess
+        (fixed-point f next))))
+
+(define (fixed-point-counter f first-guess counter)
   (define (close-enough? a b)
     (< (abs (- a b)) tolerance))
   (let ((next (f first-guess)))
@@ -174,7 +190,7 @@
 (define (average a b)
   (/ (+ a b) 2))
 
-(define (fixed-point-damp f first-guess counter)
+(define (fixed-point-damp-counter f first-guess counter)
   (define (close-enough? a b)
     (< (abs (- a b)) tolerance))
   (let ((next (average (f first-guess) first-guess)))
@@ -200,3 +216,113 @@
 
 (define (ex-1-36-damp)
   (fixed-point-damp (lambda (x) (/ (log 1000.0) (log x))) 2.0 1))
+
+;; Exercise 1.37
+
+(define (cont-frac-rec n d k)
+  (let (( D (cont-frac-rec (lambda (i) (n (inc i))) 
+                       (lambda (i) (d (inc i)))
+                       (- k 1))))
+    ((/ (n 1) (+ (d 1) D)))))
+
+(define (cont-frac n d k)
+  (define (iter k acc)
+    (if (= k 0)
+        acc
+        (let ((new-acc (/ (n k) (+ (d k) acc))))
+	  (iter (- k 1) new-acc))))
+  (iter k 0))
+
+;; This gives an accurate value for phi for 4 decimals for k=11.
+
+(define (golden k)
+  (cont-frac (lambda (i) 1.0)
+             (lambda (i) 1.0)
+             k))
+
+;; Exercise 1.38.
+;; (d i) is 1 if i is 1 or 0 modulo three. It is equal to 2*k when i is 3*k - 1.
+
+(define (d-euler i)
+  (if (= 2 (remainder i 3)) 
+      (* 2.0 (/ (inc i) 3))
+      1.0))
+
+(define (e k)
+  (+ (cont-frac (lambda (i) 1.0) 
+                d-euler
+                k) 2.0))
+
+;; Newton's method
+
+(define dx 0.00001)
+
+(define (deriv g)
+  (lambda (x) 
+    (/ (- (g (+ x dx)) (g x))
+       dx)))
+
+(define (newton-transform g)
+  (lambda (x)
+    (- x 
+       (/ (g x) ((deriv g) x)))))
+
+(define (fixed-point-of-transform f transform guess)
+  (fixed-point (transform f) guess))
+
+(define (average-damp f)
+  (lambda (x) (average (f x) x)))
+
+(define (cube-root x)
+  (fixed-point-of-transform (lambda(y) (/ x (square y))) average-damp 1.0))
+
+;; Exercise 1.40
+
+(define (cube x) (* x x x))
+
+(define (cubic a b c)
+  (lambda (x) (+ (cube x) (* a (square x)) (* b x) c)))
+
+(define (find-zero-cubic a b c)
+  (fixed-point-of-transform (cubic a b c) newton-transform 1.0))
+
+;; Exercise 1.41
+;; Note that (double (double double)) = (double double) (double double) = (double (double (double (double))))
+;; That totally confused me.
+
+(define (double g)
+  (lambda (x) (g (g x))))
+
+;; Exercise 1.42
+
+(define (compose f g)
+  (lambda (x) (f (g x))))
+
+;; Exercise 1.43
+
+;; Not the fastest implementation, since it is O(n), and I could do it in O(log(n))
+
+(define (repeated-rec f n)
+  (lambda (x) (compose f (repeated f (- n 1)))))
+
+;; Faster and iterative.
+
+(define (repeated f n)
+  (define (iter f f-acc k)
+    (cond ((= k 0) f-acc)
+          ((even? k) (iter (compose f f) f-acc (/ k 2)))
+          (else (iter f (compose f f-acc) (- k 1)))))
+  (define (identity x) x)
+  (iter f identity n))
+
+;; Exercise 1.44: Not tested.
+
+(define (smooth f)
+  (lambda (x) (/ (+ (f (- x dx)) (f x) (f (+ x dx))) 3)))
+
+(define (repeated-smooth f n)
+  ((repeated smooth n) f))
+
+;; Exercise 1.45
+
+

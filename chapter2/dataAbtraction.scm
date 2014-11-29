@@ -83,3 +83,47 @@
 ;; Otherwise I'd need to introduce an inner product or some other notion of orthogonality.
 
 ; Use the left bottom and right up corner to defie a rectangle.
+
+;; Exercise 2.4.
+
+(define (cdr-2.4 z)
+  (z (lambda (p q) q)))
+
+;; Exercise 2.5.
+
+(define (^ n)
+  (define (power x k)
+    (if (= k 0)
+        1
+        ((* x (power x (- k 1))))))
+  (lambda (x) (power x n)))
+
+(define (cons-int a b)
+  (cons ((^ a) 2) ((^ b) 3)))
+
+(define (power-divides divisor n power)
+  (if (divides? divisor n)
+      (power-divides (/ n divisor) (inc power))
+      power))
+
+(define (car-int z)
+  (power-divides 2 z 0))
+
+(define (cdr-int z)
+  (power-divides 3 z 0))
+
+;; Exercise 2.6.
+
+(define zero (lambda (f) (lambda (x) x)))
+
+(define (add-1 n)
+  (lambda (f) (lambda (x) (f ((n f) x)))))
+
+;; zero maps all functions to the identity function
+;; (add-1 zero) -> (lambda (f) (lambda (x) (f ((lambda (x) x) x)))) ->  (lambda (f) (lambda (x) (f x)))
+;; one maps all functions to themselves 
+;; two -> (lambda (f) (lambda (x) (f ((one f) x)))) -> (lambda (f) (lambda (x) (f (f x))))
+;; two maps all functions to the function composed with itself
+;; By induction, n is the function that maps f to f^n (f composed n times with itself).
+;; (+ n m): + is the composition map. Why? n is the map that maps to f^n, m to f^m. 
+;; (+ n m) maps to f^(n + m), the composition of n and m (so to speak).

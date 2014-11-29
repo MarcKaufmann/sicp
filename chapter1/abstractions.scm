@@ -325,4 +325,43 @@
 
 ;; Exercise 1.45
 
+(define (^ n x)
+  (if (= n 0)
+      1
+      (* x (^ (- n 1) x))))
 
+(define (nth-root-repeat x n k)
+  (fixed-point-of-transform (lambda (y) (/ x (^ (- n 1) y))) (repeated average-damp k) 1.0))
+
+(define (nth-root x n)
+  (nth-root-repeat x n (floor (/ (log n) (log 2)))))
+
+;; Exercise 1.46.
+
+(define (iterative-improve good-enough? improve-guess)
+  (define (iter guess) 
+    (if (good-enough? guess)
+        guess
+        (iter (improve-guess guess))))
+  iter)
+
+(define tolerance 0.00001)
+
+(define (good-enough? x)
+  (lambda (guess) 
+    (< (abs (- (square guess) x)) tolerance)))
+
+(define (improve-sqrt x)
+  (lambda (guess)
+    (average guess (/ x guess))))
+
+(define (sqrt-improve x)
+  ((iterative-improve (good-enough? x) (improve-sqrt x)) 1.0))
+
+; This is way hard getting right. 
+
+(define (fixed-point-improve f)
+  (let ((good-enough? (lambda (guess next-guess)
+                        (< (abs (- guess  next-guess)) tolerance)))
+        (improve-guess (lambda (guess) (f guess))))
+       ((iterative-improve (lambda (guess) (good-enough? guess (improve-guess guess))) improve-guess) 1.0)))

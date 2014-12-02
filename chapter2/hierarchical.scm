@@ -85,3 +85,46 @@
   (cond ((null? items) #t) 
 		(else (proc (car items)) 
 			  (for-each proc (cdr items)))))
+
+(define (count-leaves tree)
+  (cond ((null? tree) 0)
+		((not (pair? tree)) 1)
+		(else (+ (count-leaves (car tree))
+				 (count-leaves (cdr tree))))))
+
+;; Exercise 2.25
+;; Write the sequence of cdr's and car's that gives 7.
+;; (car (cdr (car (cdr (cdr (list 1 3 (list 5 7) 9)))))). I forgot a car at the beginning.
+;; Remember: cdr always returns a list, car returns an item.
+;; (car (car (list (list 7))))
+;; (car (cdr (car (cdr (car (cdr (car (cdr (car (cdr (car (cdr (list 1 (list 2 (list 3 (list 4 (list 5 (list 6 7))))))))))))))))))
+;; Totally screwed that one up. Did not realise that this is a list with two elements, so I have to get the second element by car'ing the cdr to get the nested list of two elements.
+
+;; Exercise 2.27 (Deep-reverse)
+;; (1 2) -> (2 1)
+;; ((1) 2) -> (2 (1))
+;; ((1 2) 3) -> (3 (1 2))
+;; () -> ()
+;; (1) -> (1); ((1 2)) -> ((2 1)); a list with a single element becomes (list (deep-reverse l))
+
+;; God, this took ages. Again, the problem was/is that I get confused by what is a list and what is not.
+;; I returned things as elements, rather than lists.
+
+(define (deep-reverse l)
+  (cond ((or (not (list? l)) (null? l)) l)
+		(else
+		  (append (deep-reverse (cdr l))
+				  (list (deep-reverse (car l)))))))
+
+;; What to do without append?
+;; Probably requires something iterative to keep track of things.
+;; This actually works!? Must be tons faster than the other version.
+
+(define (deep-reverse2 l)
+  (define (iter l answer)
+	(cond ((null? l) answer)
+		  ((null? (cdr l)) 
+		   (cons (deep-reverse2 (car l) answer)))
+		  (else 
+			(iter (cdr l) (cons (deep-reverse2 (car l)) answer)))))
+  (iter l ()))

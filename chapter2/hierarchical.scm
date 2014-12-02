@@ -128,3 +128,11 @@
 		  (else 
 			(iter (cdr l) (cons (deep-reverse2 (car l)) answer)))))
   (iter l ()))
+
+;; Exercise 2.28
+
+(define (fringe t)
+  (cond ((null? t) t)
+		((not (pair? t)) (list t))
+		(else (append (fringe (car t)) 
+					  (fringe (cdr t))))))

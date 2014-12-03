@@ -11,6 +11,7 @@
 ;; Exercise 2.18.
 ;; I couldn't figure this one out without using append, or rewriting it.
 ;; Why is that? Is there a way to do this smarter?
+;; Commented out as I later define append in terms of reverse, and reverse in terms of append, so this will fail.
 
 (define (reverse l)
   ;; Again, not dealing with the empty list
@@ -55,13 +56,13 @@
 
 (define (scale-list items factor)
   (if (null? items)
-	  nil
+	  '()
 	  (cons (* factor (car items))
 			(scale-list (cdr items) factor))))
 
 (define (map proc items)
   (if (null? items)
-	  nil
+	  '()
 	  (cons (proc (car items))
 			(map proc (cdr items)))))
 
@@ -69,7 +70,7 @@
 
 (define (square-list items)
   (if (null? items)
-	  nil
+	  '()
 	  (cons (square (car items)) (square-list (cdr items)))))
 
 (define (square-list items)
@@ -136,3 +137,129 @@
 		((not (pair? t)) (list t))
 		(else (append (fringe (car t)) 
 					  (fringe (cdr t))))))
+
+(define (scale-tree tree factor)
+  (cond ((null? t) '())
+		((not (pair? tree)) (* factor tree))
+		(else (cons (scale-tree (car tree) factor)
+					(scale-tree (cdr tree) factor)))))
+
+;; Exercise 2.30
+
+(define (square-tree tree)
+  (cond ((null? tree) '())
+		((not (pair? tree)) (square tree))
+		(else (cons (square-tree (car tree))
+					(square-tree (cdr tree))))))
+
+(define (square-tree-map tree)
+  (map (lambda (sub-tree)
+		 (if (pair? sub-tree)
+		     (square-tree-map sub-tree)
+			 (square sub-tree)))
+	   tree))
+
+;; Exercise 2.31
+
+(define (tree-map proc tree)
+  (cond ((null? tree) '())
+		((not (pair? tree)) (proc tree))
+		(else (cons (tree-map proc (car tree))
+					(tree-map proc (cdr tree))))))
+
+;; Exercise 2.32
+
+(define (subsets s)
+  (if (null? s)
+	  (list '())
+	  (let ((rest (subsets (cdr s))))
+		(append rest 
+				(map (lambda (element) (cons (car s) element))
+					 rest)))))
+;; Sequence operations
+
+(define (filter predicate sequence)
+  (cond ((null? sequence) '())
+		((predicate (car sequence))
+		 (cons (car sequence)
+			   (filter predicate (cdr sequence))))
+		(else (filter predicate (cdr sequence)))))
+
+;; Why would this not necessarily work?
+;; It works for addition and multiplication
+;; Is it assuming something about associativity? I think so.
+;; E.g. the desired version gives (cons 1 (cons 2 (cons ...)))
+;; whereas mine gives (... (cons 2 (cons 1 '()))...) which is different.
+;; Commutatitivity is what I am thus assuming. Oh well.
+
+(define (accumulate-own op initial sequence)
+  (if (null? sequence) 
+	  initial
+	  (accumulate-own op (op (car sequence) initial) (cdr sequence))))
+
+(define (accumulate op initial sequence)
+  (if (null? sequence) 
+	  initial
+	  (op (car sequence)
+		  (accumulate op initial (cdr sequence)))))
+
+(define (enumerate-interval low high)
+  (if (> low high)
+	  '()
+	  (cons low (enumerate-interval (+ low 1) high))))
+
+(define (enumerate-tree tree)
+  (cond ((null? tree) '())
+		((not (pair? tree)) (list tree))
+		(else (append (enumerate-tree (car tree))
+					  (enumerate-tree (cdr tree))))))
+
+(define (sum-odd-squares tree)
+  (accumulate +
+			  0
+			  (map square
+				   (filter odd?
+						   (enumerate-tree tree)))))
+
+;; Exercise 2.33.
+
+(define (map p sequence)
+  (accumulate (lambda (x y)
+				(cons (p x) y))
+			  '()
+			  sequence))
+
+(define (append seq1 seq2)
+  (accumulate cons 
+			  seq2
+			  seq1))
+
+(define (length sequence)
+  (accumulate (lambda (x y) (+ y 1))
+			  0 
+			  sequence))
+
+;; Exercise 2.34.
+
+(define (horner-eval x coefficient-sequence)
+  (accumulate (lambda (a b) 
+				(+ (* b x) a))
+			  0
+			  coefficient-sequence))
+
+;; Exercise 2.35
+
+(define (count-leaves tree)
+  (accumulate +
+			  0
+			  (map (lambda (x) 1)
+				   (enumerate-tree tree))))
+
+;; Exercise 2.36
+
+(define (accumulate-n op init seqs)
+  (if (null? (car seqs))
+	  '()
+	  (cons (accumulate op init (map (lambda (x) (car x)) seqs))
+			(accumulate-n op init (map (lambda (x) (cdr x)) seqs)))))
+

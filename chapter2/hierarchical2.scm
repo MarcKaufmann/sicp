@@ -1,3 +1,4 @@
+#lang scheme
 ;; Starting a new file, since some functions now have custom definitions 
 ;; that I want to get rid of. I want to use the in-built map, reverse, etc.
 
@@ -37,11 +38,7 @@
 
 ;; Exercise 2.39
 
-(define (reverse-r sequence)
-  (fold-right (lambda (x y) (append y (list x))) '() sequence))
-
-(define (reverse-l sequence)
-  (fold-left (lambda (x y) (append (list y) x)) '() sequence))
+(define (square x) (* x x))
 
 (define (flatmap proc seq)
   (accumulate append (list ) (map proc seq)))
@@ -83,7 +80,7 @@
 
 ;; Exercise 2.40.
 
-(define (unique-pairs n)
+(define (unique-pairs-1 n)
   (accumulate append
 			  '()
 			  (map (lambda (i)
@@ -99,7 +96,7 @@
 				  (enumerate-interval 1 (- i 1))))
 		   (enumerate-interval 1 n)))
 
-(define (prime-sum-pairs n)
+(define (prime-sum-pairs-2 n)
   (map make-pair-sum
 	   (filter prime-sum? 
 			   (unique-pairs n))))
@@ -156,3 +153,96 @@
 				 (enumerate-interval 1 board-size)))
 		  (queen-cols (- k 1))))))
 	(queen-cols board-size))
+
+;; Painter
+(require (planet "sicp.ss" ("soegaard" "sicp.plt" 2 1)))
+(define wave einstein)
+
+(define wave2 (beside wave (flip-vert wave)))
+
+(define (flipped-pairs painter)
+  (let ((painter2 (beside painter (flip-vert painter))))
+	(below painter2 painter2)))
+
+(define wave4 (flipped-pairs wave))
+
+(define (right-split painter n)
+  (if (= n 0)
+	  painter
+	  (let ((smaller (right-split painter (- n 1))))
+		(beside painter (below smaller smaller)))))
+
+(define (up-split painter n)
+  (if (= n 0)
+      painter
+      (let ((smaller (up-split painter (- n 1))))
+        (below painter (beside smaller smaller)))))
+
+(define (corner-split painter n)
+  (if (= n 0)
+      painter
+      (let ((up (up-split painter (- n 1)))
+            (right (right-split painter (- n 1))))
+        (below (beside painter right)
+               (beside up (corner-split painter (- n 1)))))))
+
+(define (square-limit painter n)
+  (let ((quarter (corner-split painter n)))
+    (below (beside (flip-vert (flip-horiz quarter))
+                   (flip-vert quarter))
+           (beside (flip-horiz quarter)
+                   quarter))))
+
+(define (square-of-four tl tr bl br)
+  (lambda (painter)
+    (let ((top (beside (tl painter) (tr painter)))
+          (bottom (beside (bl painter) (br painter))))
+      (below bottom top))))
+
+;; Exercise 2.45
+
+(define (split large small)
+  (define (result painter n)
+    (if (= n 0)
+        painter
+        (let ((right (result painter (- n 1))))
+          painter
+          (large painter (small right right)))))
+  result)
+
+;; Exercise 2.47
+
+(define (frame-coord-map-1 frame)
+  (lambda (v)
+    (add-vect (origin-frame frame)
+              (scale-vect (xcor-vect v)
+                          (edge1-frame frame))
+              (scale-vect (ycor-vect v)
+                          (edge2-frame frame)))))
+
+
+(define (add-vect . x)
+  (let ((x-coord (accumulate + 0 (map xcor-vect x)))
+        (y-coord (accumulate + 0 (map ycor-vect x))))
+    (make-vect-1 x-coord y-coord)))
+
+(define (scale-vect scalar v)
+  (make-vect-1 (* scalar (xcor-vect v))
+             (* scalar (ycor-vect v))))
+
+(define (sub-vect v w)
+  (make-vect-1 (- (xcor-vect v) (xcor-vect w))
+             (- (ycor-vect v) (ycor-vect w))))
+
+(define (make-frame-1 origin edge1 edge2)
+  (list origin edge1 edge2))
+
+(define (origin-frame frame) (car frame))
+(define (edge1-frame frame) (cadr frame))
+(define (edge2-frame frame) (cadr (cdr frame)))
+
+(define (make-vect-1 x y)
+  (cons x y))
+
+(define (xcor-vect v) (car v))
+(define (ycor-vect v) (cdr v))

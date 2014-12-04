@@ -72,3 +72,87 @@
 				   (map (lambda (j) (list i j))
 						(enumerate-interval 1 (- i 1))))
 				 (enumerate-interval 1 n)))))
+
+(define (permutations s)
+  (if (null? s)
+	  (list '())
+	  (flatmap (lambda (x) 
+				 (map (lambda (p) (cons x p))
+					  (permutations (remove x s))))
+			   s)))
+
+;; Exercise 2.40.
+
+(define (unique-pairs n)
+  (accumulate append
+			  '()
+			  (map (lambda (i)
+					 (map (lambda (j) (list j i))
+						  (enumerate-interval 1 (- i 1))))
+				   (enumerate-interval 1 n))))
+
+;; Using flatmap
+
+(define (unique-pairs n)
+  (flatmap (lambda (i) 
+			 (map (lambda (j) (list j i))
+				  (enumerate-interval 1 (- i 1))))
+		   (enumerate-interval 1 n)))
+
+(define (prime-sum-pairs n)
+  (map make-pair-sum
+	   (filter prime-sum? 
+			   (unique-pairs n))))
+
+;; Exercise 2.41
+
+(define (unique-triples n)
+  (flatmap (lambda (i)
+			 (flatmap (lambda (j)
+						(map (lambda (k)
+							   (list k j i))
+							 (enumerate-interval 1 (- j 1))))
+					  (enumerate-interval 1 (- i 1))))
+		   (enumerate-interval 1 n)))
+
+(define (triples-sum-to n s)
+  (filter (lambda (triple)
+			(= s (accumulate + 0 triple)))
+		  (unique-triples n)))
+
+;; Exercise 2.42.
+
+(define (adjoin-position new-row k rest-of-queens)
+  (append (list (list new-row k)) rest-of-queens))
+
+(define (safe? k positions)
+  ;; positions is a list of all the queens where the kth queen needs to be checked against the others
+  (define (safe-from-next? new next)
+	;; Check that rows, columns and diagonals are different
+	(if (or (= (car new) (car next))
+			(= (cadr new) (cadr next))
+			(= (abs (- (car new) (car next)))
+			   (abs (- (cadr new) (cadr next)))))
+	  #f
+	  #t))
+  (define (safe-remaining? new-queen remaining-queens)
+	(cond ((null? remaining-queens) #t)
+		  ((safe-from-next? new-queen (car remaining-queens))
+		    (safe-remaining? new-queen (cdr remaining-queens)))
+		  (else #f)))
+  (safe-remaining? (car positions) (cdr positions)))
+
+(define (queens board-size)
+  (define empty-board (list ))
+  (define (queen-cols k)
+	(if (= k 0)
+	  (list empty-board)
+	  (filter
+		(lambda (positions) (safe? k positions))
+		(flatmap
+		  (lambda (rest-of-queens)
+			(map (lambda (new-row)
+				   (adjoin-position new-row k rest-of-queens))
+				 (enumerate-interval 1 board-size)))
+		  (queen-cols (- k 1))))))
+	(queen-cols board-size))

@@ -181,3 +181,56 @@
 ;; An example where trying out the types of the arguments in the procedure would not work is with polygons:
 ;; A triangle isn't a rectangle, but both are polygons.
 
+;; Exercise 2.83.
+;; Add the following code to the rational number package.
+
+(define (raise-number->rational n)
+  (cond ((not (number? n))
+		 (error ("Argument is not an integer, need integer argument -- RAISE-NUMBER->RATIONAL" (list n))))
+		(make-rat n 1)))
+
+;; Exercise 2.84.
+;;
+
+(define (union-number u v)
+  ;; Return the 'union' of u and v, where these are any of 'scheme-number, 'rational, 'complex
+  (cond ((not (and (symbol? u) (symbol? v)))
+		 (error ("Tags need to be of type symbol -- UNION-NUMBER" (list u v))))
+		((or (eq? u 'complex) (eq? v 'complex))
+		 ('complex))
+		((or (eq? u 'rational) (eq? v 'rational))
+		 ('rational))
+		(else 'scheme-number)))
+
+;; This would not work as is, as the procedures are not installed with just one type.
+;; But that is the right way of installing them, with only 'complex (or '(complex)), not number of args.
+
+(define number-tower '(scheme-number rational complex))
+
+(define (raise-to-type n super-type)
+  (define (raise-next n tower)
+	(cond ((eq? (type-tag n) (super-type)) n)
+		  ((not (pair? tower))
+		    (error "Cannot raise number any further -- RAISE-NEXT" (list n tower)))
+		  ((eq? (type-tag n) (car tower))
+		    ;; This requires that raise has been installed as generic in previous example.
+		    (raise-next (raise (car tower) (cadr tower) n) (cdr tower)))
+		  (else
+		    (raise-next n (cdr tower)))))
+  (raise-next n number-tower))
+			
+
+(define (apply-generic op . args)
+  (let ((super-type (accumulate union-number
+							  '()
+							  (map type-tag args))))
+	(let ((proc (get op type-tag))
+		  (raised-args (map (lambda (x) 
+							  (raise-to-type x 'super-type))
+							(map contents args))))
+	  (if proc
+		  (apply proc raised-args)
+		  (error "No method for these types"
+				 (list op type-tags))))))
+
+;; TODO: If I feel like it, I can do the extended exercise at the end of the section.

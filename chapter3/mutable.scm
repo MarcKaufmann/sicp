@@ -434,5 +434,3 @@
 ((t 'insert-table!) 'second-level (list 'b 'a))
 ((t 'lookup) (list 'b 'a))
 ((t 'lookup) (list 'b 'c))
-
-
